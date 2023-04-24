@@ -1,9 +1,13 @@
+require("dotenv").config();
 const express = require("express");
 const morgan = require("morgan");
 const app = express();
 const cors = require("cors");
 app.use(cors());
 app.use(express.json());
+app.use(express.static("dist"));
+
+const Person = require("./models/persons");
 
 let persons = [
   {
@@ -29,14 +33,15 @@ let persons = [
 ];
 
 app.use(morgan("tiny"));
+// Persons
 
-app.get("/", (request, response) => {
+app.get("/", (req, res) => {
   response.send("<h1>Phonebook</h1>");
 });
-
-// Persons
 app.get("/api/persons", (request, response) => {
-  response.json(persons);
+  Person.find({}).then((persons) => {
+    response.json(persons);
+  });
 });
 ////////
 // Info
@@ -51,37 +56,49 @@ app.get("/info", (request, response) => {
 // Create a person
 app.post("/api/persons", (request, response) => {
   let per = request.body;
-  console.log("per", per);
-  if (per.name === "" || per.number === "") {
-    response.status(409).json({ error: "Name or number is missing" });
-  } else if (persons.find((person) => person.name === per.name)) {
-    response
-      .status(404)
-      .json({ error: "This person is already in the phonebook" });
-  } else {
-    let newId = getRandomNumber(persons.length + 9999);
-    per.id = newId;
-    persons = persons.concat(per);
-    response.json(per);
-  }
-});
-// Get a single person
-app.get("/api/persons/:id", (request, response) => {
-  const id = Number(request.params.id);
 
-  let returnedPerson;
-
-  persons.forEach((person) => {
-    if (person.id === id) {
-      returnedPerson = person;
-    }
+  // if (per.name === "" || per.number === "") {
+  //   response.status(409).json({ error: "Name or number is missing" });
+  // } else if (persons.find((person) => person.name === per.name)) {
+  //   response
+  //     .status(404)
+  //     .json({ error: "This person is already in the phonebook" });
+  // }
+  // let newId = getRandomNumber(persons.length + 9999);
+  // per.id = newId;
+  // persons = persons.concat(per);
+  // response.json(per);
+  const person = new Person({
+    name: body.name,
+    number: body.number,
   });
 
-  if (returnedPerson) {
-    response.json(returnedPerson);
-  } else {
-    response.status(404).end();
-  }
+  person.save().then((savedPerson) => {
+    response.json(savedPerson);
+  });
+});
+
+// Get a single person
+app.get("/api/persons/:id", (request, response) => {
+  // const id = Number(request.params.id);
+
+  // let returnedPerson;
+
+  // persons.forEach((person) => {
+  //   if (person.id === id) {
+  //     returnedPerson = person;
+  //   }
+  // });
+
+  // if (returnedPerson) {
+  //   response.json(returnedPerson);
+  // } else {
+  //   response.status(404).end();
+  // }
+
+  Person.findById(request.params.id).then((person) => {
+    response.json(person);
+  });
 });
 /////////
 // Delete a single person
@@ -98,6 +115,6 @@ const getRandomNumber = (max) => {
   return Math.floor(Math.random() * max);
 };
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 app.listen(PORT);
 console.log(`Server running on port ${PORT}`);
