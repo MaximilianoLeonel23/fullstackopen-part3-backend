@@ -34,7 +34,7 @@ app.use(express.static("dist"));
 app.use(morgan("tiny"));
 
 // Persons
-app.get("/", (req, res) => {
+app.get("/", () => {
   response.send("<h1>Phonebook Master</h1>");
 });
 
